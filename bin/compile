@@ -2,9 +2,18 @@
 
 set -e
 
+if [ ! -d "binaries-$STACK" ]; then
+  echo " !     heroku-pdftk-buildpack: Unsupported stack: $STACK"
+  echo " !     Supported stacks:"
+  find . -maxdepth 1 -type d -name "binaries-*" | sed "s#./binaries-#       - #"
+  exit 1
+fi
+
 mkdir -p "$1/bin/"
-cp -a binaries-$STACK/* "$1/bin/"
-show_version=$(LD_LIBRARY_PATH=$1/bin $1/bin/pdftk --version 2>&1 | tr '\n' ' ' )
+cp -a "binaries-$STACK"/* "$1/bin/"
+chmod +x "$1/bin/pdftk"
+version_output=$(LD_LIBRARY_PATH="$1/bin" "$1/bin/pdftk" --version 2>&1)
+show_version=$(printf "%s" "$version_output" | tr '\n' ' ')
 echo "-----> heroku-pdftk-buildpack: Installed to app/bin. ${show_version}"
 
 # Setting environment variables in .profile.d script (sourced at dyno startup)
